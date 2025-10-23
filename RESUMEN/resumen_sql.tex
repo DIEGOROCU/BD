@@ -1,0 +1,317 @@
+\documentclass[10pt,a4paper,twocolumn]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[margin=1.5cm]{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{enumitem}
+
+% Configuración de colores para código
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{sqlstyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\scriptsize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+
+\lstset{style=sqlstyle}
+
+\setlist[itemize]{noitemsep, topsep=0pt, leftmargin=*}
+\setlength{\columnsep}{1cm}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2pt}
+
+\title{\textbf{Resumen SQL/DES}}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section*{1. Comandos de Sistema DES}
+
+\textbf{/abolish}: Elimina todas las tablas y vistas.\\
+\textbf{/multiline on}: Permite consultas multilínea.\\
+\textbf{/duplicates off}: Elimina duplicados automáticamente.
+
+\section*{2. DDL - Definición de Datos}
+
+\textbf{CREATE TABLE}: Crea una nueva tabla.
+\begin{lstlisting}
+create table tabla(
+  col1 tipo primary key,
+  col2 tipo,
+  col3 tipo
+);
+\end{lstlisting}
+
+\textbf{Tipos}: \texttt{string}, \texttt{int}, \texttt{float}, etc.\\
+\textbf{PRIMARY KEY}: Define clave primaria (simple o compuesta).
+
+\section*{3. DML - Manipulación de Datos}
+
+\textbf{INSERT}: Inserta tuplas en una tabla.
+\begin{lstlisting}
+insert into tabla 
+  values('val1','val2',123);
+insert into tabla(col1,col2) 
+  values('val1','val2');
+\end{lstlisting}
+
+\textbf{NULL}: Representa valores desconocidos/no aplicables.
+
+\section*{4. Consultas SELECT}
+
+\textbf{SELECT básico}:
+\begin{lstlisting}
+select columnas from tabla
+  where condicion;
+\end{lstlisting}
+
+\textbf{SELECT *}: Selecciona todas las columnas.\\
+\textbf{DISTINCT}: Elimina duplicados en resultados.
+
+\section*{5. Operadores Lógicos}
+
+\textbf{AND, OR, NOT}: Operadores booleanos.\\
+\textbf{Comparación}: =, <>, <, >, <=, >=\\
+\textbf{IS NULL / IS NOT NULL}: Comprueba valores nulos.\\
+\textbf{IN / NOT IN}: Pertenencia a conjunto.
+
+\section*{6. VISTAS (CREATE VIEW)}
+
+Las vistas son consultas almacenadas que pueden referenciarse como tablas.
+
+\begin{lstlisting}
+create view nombre_vista as
+  select ... from ... where ...;
+\end{lstlisting}
+
+\textbf{Ventajas}: Reutilización, abstracción, simplicidad.
+
+\section*{7. Operaciones de Conjuntos}
+
+\textbf{UNION}: Unión de resultados (elimina duplicados).
+\begin{lstlisting}
+select dni from programadores
+union
+select dni from analistas;
+\end{lstlisting}
+
+\textbf{UNION DISTINCT}: Unión eliminando duplicados explícitamente.
+
+\textbf{INTERSECT}: Intersección de resultados.
+\begin{lstlisting}
+select dni from programadores
+intersect
+select dni from analistas;
+\end{lstlisting}
+
+\textbf{EXCEPT}: Diferencia de conjuntos (A - B).
+\begin{lstlisting}
+select dni from programadores
+except
+select dni from analistas;
+\end{lstlisting}
+
+\textbf{EXCEPT ALL}: Diferencia manteniendo duplicados.
+
+\section*{8. JOIN - Combinación de Tablas}
+
+\textbf{JOIN implícito} (producto cartesiano con WHERE):
+\begin{lstlisting}
+select * from tabla1, tabla2
+  where tabla1.id = tabla2.id;
+\end{lstlisting}
+
+\textbf{NATURAL JOIN}: Join por columnas con mismo nombre.
+\begin{lstlisting}
+select * from tabla1 
+  natural join tabla2;
+\end{lstlisting}
+
+\textbf{JOIN explícito}:
+\begin{lstlisting}
+select * from tabla1 
+  join tabla2 on cond;
+\end{lstlisting}
+
+\section*{9. Funciones de Agregación}
+
+\textbf{SUM(col)}: Suma de valores.\\
+\textbf{COUNT(*)}: Cuenta tuplas.\\
+\textbf{AVG(col)}: Media aritmética.\\
+\textbf{MAX(col)}: Valor máximo.\\
+\textbf{MIN(col)}: Valor mínimo.
+
+\begin{lstlisting}
+select dni, sum(horas) as total
+from distribucion
+group by dni;
+\end{lstlisting}
+
+\section*{10. GROUP BY y HAVING}
+
+\textbf{GROUP BY}: Agrupa filas por columna(s).
+\begin{lstlisting}
+select col, count(*) from tabla
+  group by col;
+\end{lstlisting}
+
+\textbf{HAVING}: Filtra grupos (después de GROUP BY).
+\begin{lstlisting}
+select col, count(*) from tabla
+  group by col
+  having count(*) > 5;
+\end{lstlisting}
+
+\textit{Diferencia}: WHERE filtra antes de agrupar, HAVING después.
+
+\section*{11. Subconsultas}
+
+\textbf{Subconsulta escalar}: Devuelve un único valor.
+\begin{lstlisting}
+select * from tabla where col =
+  (select max(col) from tabla);
+\end{lstlisting}
+
+\textbf{Subconsulta en IN}:
+\begin{lstlisting}
+where dni in 
+  (select dni from analistas);
+\end{lstlisting}
+
+\textbf{Subconsulta en FROM}: Tabla derivada.
+\begin{lstlisting}
+select * from 
+  (select dni from prog 
+   union select dni from anal);
+\end{lstlisting}
+
+\section*{12. DIVISION}
+
+Operador específico de DES para encontrar elementos que se relacionan con todos los de otro conjunto.
+
+\begin{lstlisting}
+select dniEmp from
+(select codigoPr,dniEmp 
+ from distribucion)
+division
+(select codigoPr from dist
+ where dniEmp='5');
+\end{lstlisting}
+
+\textbf{Interpretación}: Empleados asignados a todos los proyectos del empleado '5'.
+
+\section*{13. Operaciones Aritméticas}
+
+Se pueden realizar operaciones en SELECT:
+\begin{lstlisting}
+select codigo, horas*1.2 
+  from distribucion;
+\end{lstlisting}
+
+\textbf{Operadores}: +, -, *, /
+
+\section*{14. Alias y RENAME}
+
+\textbf{AS}: Define alias para columnas/tablas.
+\begin{lstlisting}
+select dni as identificador,
+  sum(horas) as total
+from distribucion;
+\end{lstlisting}
+
+\textbf{RENAME} (sintaxis DES):
+\begin{lstlisting}
+rename (dniEmp as dni)
+  (distribucion);
+\end{lstlisting}
+
+\section*{15. Consultas Complejas}
+
+\textbf{Combinando múltiples operaciones}:
+\begin{lstlisting}
+create view vista_compleja as
+(select dni,nombre,codigoPr 
+ from (select * from prog 
+       union select * from anal)
+ join dist on dni = dniEmp)
+union
+(select dni,nombre,codigo 
+ from (select * from prog 
+       union select * from anal)
+ join proy on dni = dniDir);
+\end{lstlisting}
+
+\section*{16. Buenas Prácticas}
+
+\begin{itemize}
+\item Usar vistas para consultas complejas reutilizables
+\item Aplicar filtros WHERE antes de JOIN cuando sea posible
+\item Usar DISTINCT solo cuando sea necesario (impacto en rendimiento)
+\item Nombrar columnas con alias descriptivos
+\item Dividir consultas complejas en vistas intermedias
+\item Considerar NULL en comparaciones (NULL != NULL)
+\end{itemize}
+
+\section*{17. Orden de Ejecución SQL}
+
+Orden lógico de evaluación:
+\begin{enumerate}[noitemsep]
+\item FROM (tablas/joins)
+\item WHERE (filtrado de filas)
+\item GROUP BY (agrupación)
+\item HAVING (filtrado de grupos)
+\item SELECT (proyección)
+\item UNION/INTERSECT/EXCEPT
+\item ORDER BY (no usado en ejemplos)
+\end{enumerate}
+
+\section*{18. Ejemplos Prácticos}
+
+\textbf{Empleados sin teléfono}:
+\begin{lstlisting}
+select dni,nombre from prog
+where telefono is null
+union
+select dni,nombre from anal
+where telefono is null;
+\end{lstlisting}
+
+\textbf{Suma de horas por empleado}:
+\begin{lstlisting}
+select dni, sum(horas) as total
+from (select dni from prog 
+      union select dni from anal)
+join dist on dni = dniEmp
+group by dni;
+\end{lstlisting}
+
+\textbf{Proyectos sin analistas}:
+\begin{lstlisting}
+select codigo from proyectos
+except
+select distinct codigo from
+(select codigoPr as codigo,
+        dniEmp from dist)
+join analistas on dniEmp = dni;
+\end{lstlisting}
+
+\end{document}
