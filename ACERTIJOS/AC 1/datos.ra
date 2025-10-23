@@ -1,0 +1,46 @@
+/abolish
+/type_casting on
+/multiline on
+/duplicates off
+
+create table patrones(id_patron string primary key, nombre string, titulo string, edad integer);
+insert into patrones(id_patron, nombre, titulo, edad) values('1','Jacinto','CY',45);
+insert into patrones(id_patron, nombre, titulo, edad) values('2','Herminia','PY',35);
+insert into patrones(id_patron, nombre, titulo, edad) values('3','Calixto','PER',22);
+insert into patrones(id_patron, nombre, titulo, edad) values('4','Teodora','PER',29);
+insert into patrones(id_patron, nombre, titulo, edad) values('5','Vicente','PNB',29);
+
+create table barcos(id_barco string primary key, nombre_barco string, color string);
+insert into barcos(id_barco, nombre_barco, color) values('1','Albatros','blanco');
+insert into barcos(id_barco, nombre_barco, color) values('2','Bravo','blanco');
+insert into barcos(id_barco, nombre_barco, color) values('3','Coral','rojo');
+insert into barcos(id_barco, nombre_barco, color) values('4','Dorada','blanco');
+insert into barcos(id_barco, nombre_barco, color) values('5','Exodus','azul');
+
+create table reservas(id_patron string references patrones, id_barco string references barcos, fecha date, primary key (id_patron, id_barco, fecha));
+insert into reservas(id_patron, id_barco, fecha) values('1','1','2014-06-01');
+insert into reservas(id_patron, id_barco, fecha) values('1','2','2014-06-07');
+insert into reservas(id_patron, id_barco, fecha) values('1','4','2014-08-12');
+insert into reservas(id_patron, id_barco, fecha) values('2','4','2014-07-20');
+insert into reservas(id_patron, id_barco, fecha) values('3','1','2014-08-05');
+insert into reservas(id_patron, id_barco, fecha) values('3','3','2014-09-16');
+insert into reservas(id_patron, id_barco, fecha) values('3','1','2014-06-11');
+insert into reservas(id_patron, id_barco, fecha) values('3','5','2014-07-13');
+insert into reservas(id_patron, id_barco, fecha) values('4','4','2014-08-22');
+insert into reservas(id_patron, id_barco, fecha) values('4','5','2014-09-03');
+
+-- Obtenemos una tabla de las parejas de reservas
+aux1 := project fecha(reservas) product (rename aux (fecha_aux) (project fecha(reservas)));
+-- Seleccionamos aquellas fechas que son mayores que la otra asociada a ellas
+aux2 := select (fecha > fecha_aux) (aux1);
+-- La reserva minima es aquella que no era mayor que ninguna, por lo que podemos restar todas las reservas que son mayores que alguna
+aux3 := (project fecha(reservas)) difference (project fecha(aux2));
+-- Emparejamos la reserva mas antigua con el resto
+aux4 := reservas product (rename aux (fecha_aux) (aux3));
+-- Guardamos los id de los patrones que tengan la reserva mas antigua
+aux5 := project id_patron (select (fecha = fecha_aux) (aux4));
+-- Escogemos los patrones que tienen las ids anteriores
+aux6 := select (id_patron = id_aux) (patrones product (rename aux (id_aux) (aux5)));
+-- Escogemos el nombre de dichos patrones
+vista1 := project nombre (aux6);
+select true (vista1);
