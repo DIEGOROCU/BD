@@ -29,7 +29,27 @@
     tabsize=2
 }
 
+
+% Configuración de listings para código
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green},
+    stringstyle=\color{red},
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    inputencoding=utf8,
+    % Mapeo de caracteres españoles para que no falle la compilación
+    literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'\i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+             {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+             {ñ}{{\~n}}1 {Ñ}{{\~N}}1 {ü}{{\"u}}1 {Ü}{{\"U}}1
+}
+
 \lstset{style=sqlstyle}
+
 
 \setlist[itemize]{noitemsep, topsep=0pt, leftmargin=*}
 \setlength{\columnsep}{1cm}
@@ -41,6 +61,8 @@
 \date{}
 
 \begin{document}
+
+\small
 
 \maketitle
 
@@ -314,4 +336,66 @@ select distinct codigo from
 join analistas on dniEmp = dni;
 \end{lstlisting}
 
+\section*{19. WITH - Expresiones de Tabla Comunes (CTE)}
+
+\textbf{WITH ... AS} permite definir tablas temporales nombradas (CTE) que simplifican consultas complejas y mejoran legibilidad. Se pueden encadenar varias CTE y usar \texttt{WITH RECURSIVE} para recursión.
+
+\textbf{Sintaxis básica}:
+\begin{lstlisting}
+WITH nombre_cte AS (
+  select ...
+)
+SELECT ... FROM nombre_cte;
+\end{lstlisting}
+
+\textbf{Ejemplo 1: sumar horas por empleado y filtrar}
+\begin{lstlisting}
+WITH total_horas AS (
+  SELECT dniEmp, SUM(horas) AS total
+  FROM distribución
+  GROUP BY dniEmp
+)
+SELECT dniEmp, total
+FROM total_horas
+WHERE total > 20;
+\end{lstlisting}
+
+\textbf{Ejemplo 2: equivalente a DIVISION (empleados que hacen todos los proyectos de 'Evaristo')}
+\begin{lstlisting}
+WITH proyectos_eva AS (
+  SELECT códigoPr
+  FROM distribución
+  WHERE dniEmp = (SELECT dni FROM analistas WHERE nombre = 'Evaristo')
+),
+empleados_conjunto AS (
+  SELECT dniEmp
+  FROM distribución
+  WHERE códigoPr IN (SELECT códigoPr FROM proyectos_eva)
+  GROUP BY dniEmp
+  HAVING COUNT(DISTINCT códigoPr) = (SELECT COUNT(*) FROM proyectos_eva)
+)
+SELECT dniEmp FROM empleados_conjunto;
+\end{lstlisting}
+
+\textbf{Ejemplo 3: CTE recursiva (generar números)}
+\begin{lstlisting}
+WITH RECURSIVE nums(n) AS (
+  SELECT 1
+  UNION ALL
+  SELECT n+1 FROM nums WHERE n < 5
+)
+SELECT * FROM nums;
+\end{lstlisting}
+
+\textbf{Notas}:
+\begin{itemize}
+  \item MySQL soporta \texttt{WITH} desde la versión 8.0; \texttt{WITH RECURSIVE} para recursión.
+  \item Las CTE mejoran legibilidad y evitan subconsultas repetidas.
+  \item Usar CTE en vez de vistas si la tabla temporal solo se usa dentro de la consulta.
+\end{itemize}
+
 \end{document}
+
+
+TOPTOPTOP 1
+!= <>
