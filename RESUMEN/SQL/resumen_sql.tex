@@ -50,11 +50,17 @@
 
 \lstset{style=sqlstyle}
 
+% Reducir el tamaño de los títulos de sección en el documento
+% Usamos el paquete titlesec para controlar el formato de \section y \subsection
+\usepackage{titlesec}
+% Ajustes: cambiar \normalsize/\small según lo deseado
+\titleformat{\section}{\normalfont\normalsize\bfseries}{\thesection}{0.5em}{}
+\titleformat{\subsection}{\normalfont\small\bfseries}{\thesubsection}{0.5em}{}
 
 \setlist[itemize]{noitemsep, topsep=0pt, leftmargin=*}
 \setlength{\columnsep}{1cm}
 \setlength{\parindent}{0pt}
-\setlength{\parskip}{2pt}
+\setlength{\parskip}{1pt}
 
 \title{\textbf{Resumen SQL/DES}}
 \author{}
@@ -66,13 +72,10 @@
 
 \maketitle
 
-\section*{1. Comandos de Sistema DES}
-
-\textbf{/abolish}: Elimina todas las tablas y vistas.\\
-\textbf{/multiline on}: Permite consultas multilínea.\\
-\textbf{/duplicates off}: Elimina duplicados automáticamente.
-
-\section*{2. DDL - Definición de Datos}
+% Añadido: lista automática de secciones (TOC)
+%\tableofcontents
+\vspace{1em}
+\section{DDL - Definición de Datos}
 
 \textbf{CREATE TABLE}: Crea una nueva tabla.
 \begin{lstlisting}
@@ -86,7 +89,7 @@ create table tabla(
 \textbf{Tipos}: \texttt{string}, \texttt{int}, \texttt{float}, etc.\\
 \textbf{PRIMARY KEY}: Define clave primaria (simple o compuesta).
 
-\section*{3. DML - Manipulación de Datos}
+\section{DML - Manipulación de Datos}
 
 \textbf{INSERT}: Inserta tuplas en una tabla.
 \begin{lstlisting}
@@ -98,7 +101,7 @@ insert into tabla(col1,col2)
 
 \textbf{NULL}: Representa valores desconocidos/no aplicables.
 
-\section*{4. Consultas SELECT}
+\section{Consultas SELECT}
 
 \textbf{SELECT básico}:
 \begin{lstlisting}
@@ -109,14 +112,14 @@ select columnas from tabla
 \textbf{SELECT *}: Selecciona todas las columnas.\\
 \textbf{DISTINCT}: Elimina duplicados en resultados.
 
-\section*{5. Operadores Lógicos}
+\section{Operadores Lógicos}
 
 \textbf{AND, OR, NOT}: Operadores booleanos.\\
-\textbf{Comparación}: =, <>, <, >, <=, >=\\
+\textbf{Comparación}: =, \textless\textgreater, \textless, \textgreater, \textless=, \textgreater=\\
 \textbf{IS NULL / IS NOT NULL}: Comprueba valores nulos.\\
 \textbf{IN / NOT IN}: Pertenencia a conjunto.
 
-\section*{6. VISTAS (CREATE VIEW)}
+\section{VISTAS (CREATE VIEW)}
 
 Las vistas son consultas almacenadas que pueden referenciarse como tablas.
 
@@ -125,9 +128,7 @@ create view nombre_vista as
   select ... from ... where ...;
 \end{lstlisting}
 
-\textbf{Ventajas}: Reutilización, abstracción, simplicidad.
-
-\section*{7. Operaciones de Conjuntos}
+\section{Operaciones de Conjuntos}
 
 \textbf{UNION}: Unión de resultados (elimina duplicados).
 \begin{lstlisting}
@@ -154,7 +155,7 @@ select dni from analistas;
 
 \textbf{EXCEPT ALL}: Diferencia manteniendo duplicados.
 
-\section*{8. JOIN - Combinación de Tablas}
+\section{JOIN - Combinación de Tablas}
 
 \textbf{JOIN implícito} (producto cartesiano con WHERE):
 \begin{lstlisting}
@@ -171,10 +172,10 @@ select * from tabla1
 \textbf{JOIN explícito}:
 \begin{lstlisting}
 select * from tabla1 
-  join tabla2 on cond;
+  join tabla2 on tabla1.col1 = tabla2.col2;
 \end{lstlisting}
 
-\section*{9. Funciones de Agregación}
+\section{Funciones de Agregación}
 
 \textbf{SUM(col)}: Suma de valores.\\
 \textbf{COUNT(*)}: Cuenta tuplas.\\
@@ -188,7 +189,7 @@ from distribucion
 group by dni;
 \end{lstlisting}
 
-\section*{10. GROUP BY y HAVING}
+\section{GROUP BY y HAVING}
 
 \textbf{GROUP BY}: Agrupa filas por columna(s).
 \begin{lstlisting}
@@ -205,7 +206,7 @@ select col, count(*) from tabla
 
 \textit{Diferencia}: WHERE filtra antes de agrupar, HAVING después.
 
-\section*{11. Subconsultas}
+\section{Subconsultas}
 
 \textbf{Subconsulta escalar}: Devuelve un único valor.
 \begin{lstlisting}
@@ -226,7 +227,7 @@ select * from
    union select dni from anal);
 \end{lstlisting}
 
-\section*{12. DIVISION}
+\section{DIVISION}
 
 Operador específico de DES para encontrar elementos que se relacionan con todos los de otro conjunto.
 
@@ -241,7 +242,7 @@ division
 
 \textbf{Interpretación}: Empleados asignados a todos los proyectos del empleado '5'.
 
-\section*{13. Operaciones Aritméticas}
+\section{Operaciones Aritméticas}
 
 Se pueden realizar operaciones en SELECT:
 \begin{lstlisting}
@@ -251,7 +252,7 @@ select codigo, horas*1.2
 
 \textbf{Operadores}: +, -, *, /
 
-\section*{14. Alias y RENAME}
+\section{Alias y RENAME}
 
 \textbf{AS}: Define alias para columnas/tablas.
 \begin{lstlisting}
@@ -266,47 +267,58 @@ rename (dniEmp as dni)
   (distribucion);
 \end{lstlisting}
 
-\section*{15. Consultas Complejas}
+\section{WITH - Expresiones de Tabla Comunes (CTE)}
 
-\textbf{Combinando múltiples operaciones}:
+\textbf{WITH ... AS} permite definir tablas temporales nombradas (CTE) que simplifican consultas complejas y mejoran legibilidad. Se pueden encadenar varias CTE y usar \texttt{WITH RECURSIVE} para recursión.
+
+\textbf{Sintaxis básica}:
 \begin{lstlisting}
-create view vista_compleja as
-(select dni,nombre,codigoPr 
- from (select * from prog 
-       union select * from anal)
- join dist on dni = dniEmp)
-union
-(select dni,nombre,codigo 
- from (select * from prog 
-       union select * from anal)
- join proy on dni = dniDir);
+WITH nombre_cte (columna1, ...) AS (
+  select ...
+)
+SELECT ... FROM nombre_cte;
 \end{lstlisting}
 
-\section*{16. Buenas Prácticas}
+\textbf{Ejemplo 1: sumar horas por empleado y filtrar}
+\begin{lstlisting}
+WITH total_horas (dniEmp, total) AS (
+  SELECT dniEmp, SUM(horas) AS total
+  FROM distribución
+  GROUP BY dniEmp
+)
+SELECT dniEmp, total
+FROM total_horas
+WHERE total > 20;
+\end{lstlisting}
 
-\begin{itemize}
-\item Usar vistas para consultas complejas reutilizables
-\item Aplicar filtros WHERE antes de JOIN cuando sea posible
-\item Usar DISTINCT solo cuando sea necesario (impacto en rendimiento)
-\item Nombrar columnas con alias descriptivos
-\item Dividir consultas complejas en vistas intermedias
-\item Considerar NULL en comparaciones (NULL != NULL)
-\end{itemize}
+\textbf{Ejemplo 2: equivalente a DIVISION (empleados que hacen todos los proyectos de 'Evaristo')}
+\begin{lstlisting}
+WITH proyectos_eva (códigoPr) AS (
+  SELECT códigoPr
+  FROM distribución
+  WHERE dniEmp = (SELECT dni FROM analistas WHERE nombre = 'Evaristo')
+),
+empleados_conjunto (dniEmp) AS (
+  SELECT dniEmp
+  FROM distribución
+  WHERE códigoPr IN (SELECT códigoPr FROM proyectos_eva)
+  GROUP BY dniEmp
+  HAVING COUNT(DISTINCT códigoPr) = (SELECT COUNT(*) FROM proyectos_eva)
+)
+SELECT dniEmp FROM empleados_conjunto;
+\end{lstlisting}
 
-\section*{17. Orden de Ejecución SQL}
+\section{Uso del TOP y ORDER BY}
+\textbf{TOP n}: Limita el número de filas devueltas.
+\textbf{ORDER BY}: Ordena resultados por columna(s), se puede usar ASC (ascendente) o DESC (descendente).
+\begin{lstlisting}
+SELECT TOP 5 dniEmp, SUM(horas) AS total
+FROM distribución
+GROUP BY dniEmp
+ORDER BY total DESC;
+\end{lstlisting}
 
-Orden lógico de evaluación:
-\begin{enumerate}[noitemsep]
-\item FROM (tablas/joins)
-\item WHERE (filtrado de filas)
-\item GROUP BY (agrupación)
-\item HAVING (filtrado de grupos)
-\item SELECT (proyección)
-\item UNION/INTERSECT/EXCEPT
-\item ORDER BY (no usado en ejemplos)
-\end{enumerate}
-
-\section*{18. Ejemplos Prácticos}
+\section{Ejemplos Prácticos}
 
 \textbf{Empleados sin teléfono}:
 \begin{lstlisting}
@@ -336,66 +348,54 @@ select distinct codigo from
 join analistas on dniEmp = dni;
 \end{lstlisting}
 
-\section*{19. WITH - Expresiones de Tabla Comunes (CTE)}
-
-\textbf{WITH ... AS} permite definir tablas temporales nombradas (CTE) que simplifican consultas complejas y mejoran legibilidad. Se pueden encadenar varias CTE y usar \texttt{WITH RECURSIVE} para recursión.
-
-\textbf{Sintaxis básica}:
+\textbf{Combinando múltiples operaciones}:
 \begin{lstlisting}
-WITH nombre_cte AS (
-  select ...
-)
-SELECT ... FROM nombre_cte;
+create view vista_compleja as
+(select dni,nombre,codigoPr 
+ from (select * from prog 
+       union select * from anal)
+ join dist on dni = dniEmp)
+union
+(select dni,nombre,codigo 
+ from (select * from prog 
+       union select * from anal)
+ join proy on dni = dniDir);
 \end{lstlisting}
 
-\textbf{Ejemplo 1: sumar horas por empleado y filtrar}
+\textbf{Combinando JOIN y WITH}:
 \begin{lstlisting}
-WITH total_horas AS (
-  SELECT dniEmp, SUM(horas) AS total
-  FROM distribución
-  GROUP BY dniEmp
+WITH pelea (barco, fecha, resultado) AS (
+  SELECT barco, fecha, resultado
+  FROM batallas join resultados
+    ON nombre = batalla
 )
-SELECT dniEmp, total
-FROM total_horas
-WHERE total > 20;
+SELECT barco
+FROM pelea p1 JOIN pelea p2
+  ON p1.barco = p2.barco
+WHERE p1.fecha < p2.fecha
+  AND p1.resultado = 'victoria'
+  AND p2.resultado = 'derrota';
 \end{lstlisting}
 
-\textbf{Ejemplo 2: equivalente a DIVISION (empleados que hacen todos los proyectos de 'Evaristo')}
+\textbf{Uso de 2 JOIN simultaneos}
 \begin{lstlisting}
-WITH proyectos_eva AS (
-  SELECT códigoPr
-  FROM distribución
-  WHERE dniEmp = (SELECT dni FROM analistas WHERE nombre = 'Evaristo')
-),
-empleados_conjunto AS (
-  SELECT dniEmp
-  FROM distribución
-  WHERE códigoPr IN (SELECT códigoPr FROM proyectos_eva)
-  GROUP BY dniEmp
-  HAVING COUNT(DISTINCT códigoPr) = (SELECT COUNT(*) FROM proyectos_eva)
-)
-SELECT dniEmp FROM empleados_conjunto;
+SELECT  PROJNO, DEPTNAME, MGRNO, LASTNAME
+FROM    PROJECT JOIN DEPARTMENT
+        ON PROJECT.DEPTNO = DEPARTMENT.DEPTNO
+  JOIN EMPLOYEE
+        ON DEPARTMENT.MGRNO = EMPLOYEE.EMPNO
+WHERE   DEPARTMENT.DEPTNO = 'D21'
+ORDER BY PROJNO;
 \end{lstlisting}
-
-\textbf{Ejemplo 3: CTE recursiva (generar números)}
+Que equivale a:
 \begin{lstlisting}
-WITH RECURSIVE nums(n) AS (
-  SELECT 1
-  UNION ALL
-  SELECT n+1 FROM nums WHERE n < 5
-)
-SELECT * FROM nums;
+SELECT  PROJNO, DEPTNAME, MGRNO, LASTNAME
+FROM    PROJECT P JOIN DEPARTMENT D
+        ON P.DEPTNO = D.DEPTNO
+  JOIN EMPLOYEE E
+        ON D.MGRNO = E.EMPNO
+WHERE   D.DEPTNO = 'D21'
+ORDER BY P.PROJNO;
 \end{lstlisting}
-
-\textbf{Notas}:
-\begin{itemize}
-  \item MySQL soporta \texttt{WITH} desde la versión 8.0; \texttt{WITH RECURSIVE} para recursión.
-  \item Las CTE mejoran legibilidad y evitan subconsultas repetidas.
-  \item Usar CTE en vez de vistas si la tabla temporal solo se usa dentro de la consulta.
-\end{itemize}
-
+En este ultimo caso, se puede poner en el SELECT PROJNO o P.PROJNO, ya que no hay ambigüedad.
 \end{document}
-
-
-TOPTOPTOP 1
-!= <>
