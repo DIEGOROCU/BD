@@ -8,10 +8,11 @@ Resumen de 1 página sobre fundamentos de PL/SQL.
 2. **Variables**: Tipos de datos, declaración, %TYPE, %ROWTYPE
 3. **Control**: IF-THEN-ELSE, CASE, LOOP, WHILE, FOR
 4. **Cursores**: Implícitos, explícitos, FOR LOOP
-5. **Excepciones**: Manejo básico, excepciones predefinidas
-6. **Operaciones SQL**: SELECT INTO, INSERT, UPDATE, DELETE
-7. **DBMS_OUTPUT**: Salida de mensajes
-8. **Ejemplos Prácticos**: Casos de uso comunes
+5. **Registros**: TYPE RECORD, %ROWTYPE, cursores con registros
+6. **Excepciones**: Manejo básico, excepciones predefinidas
+7. **Operaciones SQL**: SELECT INTO, INSERT, UPDATE, DELETE
+8. **DBMS_OUTPUT**: Salida de mensajes
+9. **Ejemplos Prácticos**: Casos de uso comunes
 
 ## Archivos
 

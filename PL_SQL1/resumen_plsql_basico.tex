@@ -192,7 +192,50 @@ END LOOP;
 
 \textbf{Atributos}: \%FOUND, \%NOTFOUND, \%ROWCOUNT, \%ISOPEN.
 
-\section*{5. Excepciones}
+\section*{5. Registros}
+
+\textbf{TYPE RECORD}: Estructura de datos compuesta.
+
+\begin{lstlisting}
+DECLARE
+  TYPE r_persona IS RECORD(
+    nombre VARCHAR2(25),
+    apellido VARCHAR2(25),
+    salario NUMBER(10));
+  v_emp r_persona;
+BEGIN
+  v_emp.nombre := 'Ana';
+  v_emp.salario := 30000;
+END;
+/
+\end{lstlisting}
+
+\textbf{\%ROWTYPE para registros}:
+\begin{lstlisting}
+DECLARE
+  v_emp empleados%ROWTYPE;  -- Estructura de tabla
+  CURSOR c IS SELECT nom,sal FROM emp;
+  v_dato c%ROWTYPE;          -- Estructura de cursor
+BEGIN
+  SELECT * INTO v_emp FROM empleados WHERE id=101;
+  DBMS_OUTPUT.PUT_LINE(v_emp.nom || ': ' || v_emp.sal);
+END;
+/
+\end{lstlisting}
+
+\textbf{Cursores con registros}:
+\begin{lstlisting}
+DECLARE
+  CURSOR c IS SELECT nom,sal FROM emp;
+BEGIN
+  FOR v_reg IN c LOOP
+    DBMS_OUTPUT.PUT_LINE(v_reg.nom || ': ' || v_reg.sal);
+  END LOOP;
+END;
+/
+\end{lstlisting}
+
+\section*{6. Excepciones}
 
 \textbf{Predefinidas}: NO\_DATA\_FOUND, TOO\_MANY\_ROWS, ZERO\_DIVIDE, VALUE\_ERROR, INVALID\_NUMBER.
 
@@ -219,7 +262,7 @@ END;
 /
 \end{lstlisting}
 
-\section*{6. Operaciones SQL}
+\section*{7. Operaciones SQL}
 
 \textbf{SELECT INTO}:
 \begin{lstlisting}
@@ -234,7 +277,7 @@ DELETE FROM emp WHERE salario<1000;
 DBMS_OUTPUT.PUT_LINE('Filas: ' || SQL%ROWCOUNT);
 \end{lstlisting}
 
-\section*{7. DBMS\_OUTPUT}
+\section*{8. DBMS\_OUTPUT}
 
 \begin{lstlisting}
 SET SERVEROUTPUT ON;
@@ -244,7 +287,7 @@ END;
 /
 \end{lstlisting}
 
-\section*{8. Ejemplos Prácticos}
+\section*{9. Ejemplos Prácticos}
 
 \textbf{Calcular bonus}:
 \begin{lstlisting}
