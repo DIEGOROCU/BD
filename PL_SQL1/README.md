@@ -12,7 +12,9 @@ Resumen de 1 página sobre fundamentos de PL/SQL.
 6. **Excepciones**: Manejo básico, excepciones predefinidas
 7. **Operaciones SQL**: SELECT INTO, INSERT, UPDATE, DELETE
 8. **DBMS_OUTPUT**: Salida de mensajes
-9. **Ejemplos Prácticos**: Casos de uso comunes
+9. **Procedimientos**: CREATE PROCEDURE, parámetros IN/OUT
+10. **Funciones**: CREATE FUNCTION, RETURN
+11. **Ejemplos Prácticos**: Casos de uso comunes
 
 ## Archivos
 

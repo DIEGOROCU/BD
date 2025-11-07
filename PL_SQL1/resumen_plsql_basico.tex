@@ -287,7 +287,54 @@ END;
 /
 \end{lstlisting}
 
-\section*{9. Ejemplos Prácticos}
+\section*{9. Procedimientos}
+
+\textbf{CREATE PROCEDURE}: Bloque con nombre almacenado en la BD.
+
+\begin{lstlisting}
+CREATE OR REPLACE PROCEDURE actualizar_sal(
+  p_id IN NUMBER,
+  p_porc IN NUMBER
+) IS
+BEGIN
+  UPDATE emp SET sal=sal*(1+p_porc/100) WHERE id=p_id;
+  COMMIT;
+END;
+/
+\end{lstlisting}
+
+\textbf{Ejecución}:
+\begin{lstlisting}
+EXECUTE actualizar_sal(101, 10);
+-- O desde bloque:
+BEGIN actualizar_sal(101, 10); END;
+/
+\end{lstlisting}
+
+\textbf{Parámetros}: IN (entrada), OUT (salida), IN OUT (ambos).
+
+\section*{10. Funciones}
+
+\textbf{CREATE FUNCTION}: Similar a procedimiento pero retorna valor.
+
+\begin{lstlisting}
+CREATE OR REPLACE FUNCTION calc_iva(
+  p_precio NUMBER
+) RETURN NUMBER IS
+BEGIN
+  RETURN p_precio * 1.21;
+END;
+/
+\end{lstlisting}
+
+\textbf{Uso}:
+\begin{lstlisting}
+SELECT nom, precio, calc_iva(precio) FROM productos;
+-- O en bloque:
+v_total := calc_iva(100);
+\end{lstlisting}
+
+\section*{11. Ejemplos Prácticos}
 
 \textbf{Calcular bonus}:
 \begin{lstlisting}
