@@ -192,7 +192,50 @@ END LOOP;
 
 \textbf{Atributos}: \%FOUND, \%NOTFOUND, \%ROWCOUNT, \%ISOPEN.
 
-\section*{5. Excepciones}
+\section*{5. Registros}
+
+\textbf{TYPE RECORD}: Estructura de datos compuesta.
+
+\begin{lstlisting}
+DECLARE
+  TYPE r_persona IS RECORD(
+    nombre VARCHAR2(25),
+    apellido VARCHAR2(25),
+    salario NUMBER(10));
+  v_emp r_persona;
+BEGIN
+  v_emp.nombre := 'Ana';
+  v_emp.salario := 30000;
+END;
+/
+\end{lstlisting}
+
+\textbf{\%ROWTYPE para registros}:
+\begin{lstlisting}
+DECLARE
+  v_emp emp%ROWTYPE;  -- Estructura de tabla
+  CURSOR c IS SELECT nom,sal FROM emp;
+  v_dato c%ROWTYPE;          -- Estructura de cursor
+BEGIN
+  SELECT * INTO v_emp FROM emp WHERE id=101;
+  DBMS_OUTPUT.PUT_LINE(v_emp.nom || ': ' || v_emp.sal);
+END;
+/
+\end{lstlisting}
+
+\textbf{Cursores con registros}:
+\begin{lstlisting}
+DECLARE
+  CURSOR c IS SELECT nom,sal FROM emp;
+BEGIN
+  FOR v_reg IN c LOOP
+    DBMS_OUTPUT.PUT_LINE(v_reg.nom || ': ' || v_reg.sal);
+  END LOOP;
+END;
+/
+\end{lstlisting}
+
+\section*{6. Excepciones}
 
 \textbf{Predefinidas}: NO\_DATA\_FOUND, TOO\_MANY\_ROWS, ZERO\_DIVIDE, VALUE\_ERROR, INVALID\_NUMBER.
 
@@ -219,22 +262,22 @@ END;
 /
 \end{lstlisting}
 
-\section*{6. Operaciones SQL}
+\section*{7. Operaciones SQL}
 
 \textbf{SELECT INTO}:
 \begin{lstlisting}
-SELECT nombre,salario INTO v_nom,v_sal FROM emp WHERE id=101;
+SELECT nom,sal INTO v_nom,v_sal FROM emp WHERE id=101;
 \end{lstlisting}
 
 \textbf{INSERT/UPDATE/DELETE}:
 \begin{lstlisting}
 INSERT INTO emp VALUES(999,'Ana',3500); COMMIT;
-UPDATE emp SET salario=salario*1.1 WHERE dept=10;
-DELETE FROM emp WHERE salario<1000;
+UPDATE emp SET sal=sal*1.1 WHERE dept=10;
+DELETE FROM emp WHERE sal<1000;
 DBMS_OUTPUT.PUT_LINE('Filas: ' || SQL%ROWCOUNT);
 \end{lstlisting}
 
-\section*{7. DBMS\_OUTPUT}
+\section*{8. DBMS\_OUTPUT}
 
 \begin{lstlisting}
 SET SERVEROUTPUT ON;
@@ -244,15 +287,62 @@ END;
 /
 \end{lstlisting}
 
-\section*{8. Ejemplos Prácticos}
+\section*{9. Procedimientos}
+
+\textbf{CREATE PROCEDURE}: Bloque con nombre almacenado en la BD.
+
+\begin{lstlisting}
+CREATE OR REPLACE PROCEDURE actualizar_sal(
+  p_id IN NUMBER,
+  p_porc IN NUMBER
+) IS
+BEGIN
+  UPDATE emp SET sal=sal*(1+p_porc/100) WHERE id=p_id;
+  COMMIT;
+END;
+/
+\end{lstlisting}
+
+\textbf{Ejecución}:
+\begin{lstlisting}
+EXECUTE actualizar_sal(101, 10);
+-- O desde bloque:
+BEGIN actualizar_sal(101, 10); END;
+/
+\end{lstlisting}
+
+\textbf{Parámetros}: IN (entrada), OUT (salida), IN OUT (ambos).
+
+\section*{10. Funciones}
+
+\textbf{CREATE FUNCTION}: Similar a procedimiento pero retorna valor.
+
+\begin{lstlisting}
+CREATE OR REPLACE FUNCTION calc_iva(
+  p_precio NUMBER
+) RETURN NUMBER IS
+BEGIN
+  RETURN p_precio * 1.21;
+END;
+/
+\end{lstlisting}
+
+\textbf{Uso}:
+\begin{lstlisting}
+SELECT nom, precio, calc_iva(precio) FROM productos;
+-- O en bloque:
+v_total := calc_iva(100);
+\end{lstlisting}
+
+\section*{11. Ejemplos Prácticos}
 
 \textbf{Calcular bonus}:
 \begin{lstlisting}
 DECLARE
-  CURSOR c IS SELECT emp_id,salario FROM empleados WHERE dept=10;
+  CURSOR c IS SELECT emp_id,sal FROM emp WHERE dept=10;
 BEGIN
   FOR r IN c LOOP
-    UPDATE empleados SET bonus=r.salario*0.1 WHERE emp_id=r.emp_id;
+    UPDATE emp SET bonus=r.sal*0.1 WHERE emp_id=r.emp_id;
   END LOOP;
   COMMIT;
 END;
@@ -264,7 +354,7 @@ END;
 DECLARE
   c_min CONSTANT NUMBER := 1500;
 BEGIN
-  UPDATE empleados SET salario=c_min WHERE salario<c_min;
+  UPDATE emp SET sal=c_min WHERE sal<c_min;
   DBMS_OUTPUT.PUT_LINE('Actualizados: ' || SQL%ROWCOUNT);
   COMMIT;
 END;
