@@ -1,0 +1,557 @@
+\documentclass[8pt,a4paper,twocolumn]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[margin=0.6cm]{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{enumitem}
+
+% Configuración de colores para código
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{sqlstyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\tiny,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+
+\lstset{
+    basicstyle=\ttfamily\tiny,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green},
+    stringstyle=\color{red},
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    inputencoding=utf8,
+    literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'\i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+             {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+             {ñ}{{\~n}}1 {Ñ}{{\~N}}1 {ü}{{\"u}}1 {Ü}{{\"U}}1
+}
+
+\lstset{style=sqlstyle}
+
+\setlist[itemize]{noitemsep, topsep=0pt, leftmargin=*, itemsep=0pt}
+\setlist[enumerate]{noitemsep, topsep=0pt, leftmargin=*, itemsep=0pt}
+\setlength{\columnsep}{0.6cm}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5pt}
+
+\title{\textbf{Tema 4: PL/SQL Avanzado}}
+\author{}
+\date{}
+
+\begin{document}
+
+\tiny
+
+\maketitle
+
+\section*{1. Procedimientos Almacenados}
+
+\textbf{CREATE PROCEDURE}: Define un procedimiento almacenado reutilizable.
+
+\begin{lstlisting}
+CREATE PROCEDURE nombre_proc(
+  param1 IN tipo,
+  param2 OUT tipo,
+  param3 IN OUT tipo
+) AS
+  -- Declaraciones
+  variable tipo;
+BEGIN
+  -- Código del procedimiento
+  SELECT col INTO variable FROM tabla WHERE id = param1;
+  param2 := variable * 2;
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    param2 := 0;
+END;
+/
+\end{lstlisting}
+
+\textbf{Parámetros}:\\
+\texttt{IN}: Parámetro de entrada (solo lectura).\\
+\texttt{OUT}: Parámetro de salida (solo escritura).\\
+\texttt{IN OUT}: Parámetro de entrada/salida.
+
+\textbf{Ejecución}:
+\begin{lstlisting}
+EXECUTE nombre_proc(val1, :var_out, :var_inout);
+-- O en bloque PL/SQL:
+BEGIN
+  nombre_proc(10, resultado, contador);
+END;
+/
+\end{lstlisting}
+
+\textbf{Eliminar procedimiento}:
+\begin{lstlisting}
+DROP PROCEDURE nombre_proc;
+\end{lstlisting}
+
+\section*{2. Funciones}
+
+\textbf{CREATE FUNCTION}: Define una función que devuelve un valor.
+
+\begin{lstlisting}
+CREATE FUNCTION calc_bonus(
+  salario NUMBER,
+  años NUMBER
+) RETURN NUMBER AS
+  bonus NUMBER;
+BEGIN
+  IF años > 5 THEN
+    bonus := salario * 0.15;
+  ELSE
+    bonus := salario * 0.10;
+  END IF;
+  RETURN bonus;
+EXCEPTION
+  WHEN OTHERS THEN
+    RETURN 0;
+END;
+/
+\end{lstlisting}
+
+\textbf{Uso en consultas}:
+\begin{lstlisting}
+SELECT nombre, salario, 
+       calc_bonus(salario, años_servicio) AS bonus
+FROM empleados;
+\end{lstlisting}
+
+\textbf{Diferencias con procedimientos}:
+\begin{itemize}
+\item Función: RETURN obligatorio, puede usarse en SELECT
+\item Procedimiento: Sin RETURN, solo ejecutable con EXECUTE/CALL
+\end{itemize}
+
+\section*{3. Triggers (Disparadores)}
+
+\textbf{CREATE TRIGGER}: Define acciones automáticas antes/después de eventos DML.
+
+\textbf{Sintaxis básica}:
+\begin{lstlisting}
+CREATE TRIGGER nombre_trigger
+  {BEFORE | AFTER} {INSERT | UPDATE | DELETE}
+  ON tabla
+  [FOR EACH ROW]
+  [WHEN (condición)]
+DECLARE
+  -- Declaraciones opcionales
+BEGIN
+  -- Código del trigger
+END;
+/
+\end{lstlisting}
+
+\textbf{Trigger de nivel de fila (FOR EACH ROW)}:
+\begin{lstlisting}
+CREATE TRIGGER audit_salario
+  BEFORE UPDATE OF salario ON empleados
+  FOR EACH ROW
+BEGIN
+  IF :NEW.salario < :OLD.salario THEN
+    RAISE_APPLICATION_ERROR(-20001,
+      'Salario no puede decrecer');
+  END IF;
+  INSERT INTO auditoria VALUES(
+    :OLD.emp_id, :OLD.salario, 
+    :NEW.salario, SYSDATE);
+END;
+/
+\end{lstlisting}
+
+\textbf{Variables :NEW y :OLD}:\\
+\texttt{:NEW}: Valores nuevos (INSERT, UPDATE).\\
+\texttt{:OLD}: Valores antiguos (UPDATE, DELETE).\\
+No disponibles en triggers de nivel de sentencia.
+
+\textbf{Trigger de nivel de sentencia}:
+\begin{lstlisting}
+CREATE TRIGGER log_cambios
+  AFTER INSERT OR UPDATE OR DELETE ON tabla
+BEGIN
+  INSERT INTO log VALUES(USER, SYSDATE, 'DML en tabla');
+END;
+/
+\end{lstlisting}
+
+\textbf{INSTEAD OF trigger} (para vistas):
+\begin{lstlisting}
+CREATE TRIGGER upd_vista
+  INSTEAD OF UPDATE ON vista_compleja
+  FOR EACH ROW
+BEGIN
+  UPDATE tabla1 SET col = :NEW.col WHERE id = :OLD.id;
+  UPDATE tabla2 SET val = :NEW.val WHERE id = :OLD.id;
+END;
+/
+\end{lstlisting}
+
+\textbf{Gestión de triggers}:
+\begin{lstlisting}
+-- Deshabilitar/habilitar
+ALTER TRIGGER nombre_trigger DISABLE;
+ALTER TRIGGER nombre_trigger ENABLE;
+-- Eliminar
+DROP TRIGGER nombre_trigger;
+\end{lstlisting}
+
+\section*{4. Paquetes (PACKAGES)}
+
+\textbf{CREATE PACKAGE}: Agrupa procedimientos, funciones, variables y tipos relacionados.
+
+\textbf{Especificación (interfaz pública)}:
+\begin{lstlisting}
+CREATE PACKAGE pkg_empleados AS
+  -- Constantes públicas
+  tasa_impuesto CONSTANT NUMBER := 0.21;
+  -- Variables públicas
+  total_procesados NUMBER := 0;
+  -- Funciones públicas
+  FUNCTION calc_neto(bruto NUMBER) RETURN NUMBER;
+  -- Procedimientos públicos
+  PROCEDURE aumentar_salario(emp_id NUMBER, pct NUMBER);
+END pkg_empleados;
+/
+\end{lstlisting}
+
+\textbf{Cuerpo (implementación)}:
+\begin{lstlisting}
+CREATE PACKAGE BODY pkg_empleados AS
+  -- Variables privadas
+  contador_interno NUMBER := 0;
+  
+  -- Función privada
+  FUNCTION validar_empleado(id NUMBER) RETURN BOOLEAN AS
+    v_count NUMBER;
+  BEGIN
+    SELECT COUNT(*) INTO v_count FROM empleados WHERE emp_id = id;
+    RETURN v_count > 0;
+  END;
+  
+  -- Implementación función pública
+  FUNCTION calc_neto(bruto NUMBER) RETURN NUMBER AS
+  BEGIN
+    RETURN bruto * (1 - tasa_impuesto);
+  END;
+  
+  -- Implementación procedimiento público
+  PROCEDURE aumentar_salario(emp_id NUMBER, pct NUMBER) AS
+  BEGIN
+    IF validar_empleado(emp_id) THEN
+      UPDATE empleados SET salario = salario * (1 + pct/100)
+      WHERE emp_id = emp_id;
+      total_procesados := total_procesados + 1;
+    END IF;
+  END;
+END pkg_empleados;
+/
+\end{lstlisting}
+
+\textbf{Uso de paquetes}:
+\begin{lstlisting}
+-- Acceder a elementos públicos
+DECLARE
+  neto NUMBER;
+BEGIN
+  neto := pkg_empleados.calc_neto(5000);
+  pkg_empleados.aumentar_salario(101, 10);
+  DBMS_OUTPUT.PUT_LINE('Total: ' || pkg_empleados.total_procesados);
+END;
+/
+\end{lstlisting}
+
+\section*{5. Manejo de Excepciones}
+
+\textbf{Estructura EXCEPTION}:
+\begin{lstlisting}
+DECLARE
+  v_salario NUMBER;
+BEGIN
+  SELECT salario INTO v_salario FROM empleados WHERE id = 999;
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('Empleado no encontrado');
+  WHEN TOO_MANY_ROWS THEN
+    DBMS_OUTPUT.PUT_LINE('Múltiples empleados');
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+END;
+/
+\end{lstlisting}
+
+\textbf{Excepciones predefinidas}:\\
+\texttt{NO\_DATA\_FOUND}: SELECT INTO sin resultados.\\
+\texttt{TOO\_MANY\_ROWS}: SELECT INTO con múltiples filas.\\
+\texttt{ZERO\_DIVIDE}: División por cero.\\
+\texttt{DUP\_VAL\_ON\_INDEX}: Violación de clave única.\\
+\texttt{INVALID\_NUMBER}: Conversión numérica inválida.\\
+\texttt{VALUE\_ERROR}: Error aritmético, conversión o truncamiento.
+
+\textbf{Excepciones definidas por usuario}:
+\begin{lstlisting}
+DECLARE
+  salario_bajo EXCEPTION;
+  v_salario NUMBER;
+BEGIN
+  SELECT salario INTO v_salario FROM empleados WHERE id = 101;
+  IF v_salario < 1000 THEN
+    RAISE salario_bajo;
+  END IF;
+EXCEPTION
+  WHEN salario_bajo THEN
+    DBMS_OUTPUT.PUT_LINE('Salario menor al mínimo');
+END;
+/
+\end{lstlisting}
+
+\textbf{RAISE\_APPLICATION\_ERROR}: Genera error personalizado.
+\begin{lstlisting}
+IF v_edad < 18 THEN
+  RAISE_APPLICATION_ERROR(-20001, 
+    'Edad debe ser >= 18');
+END IF;
+\end{lstlisting}
+Rango: -20000 a -20999 para errores de usuario.
+
+\textbf{PRAGMA EXCEPTION\_INIT}: Asocia nombre a código de error.
+\begin{lstlisting}
+DECLARE
+  fk_violation EXCEPTION;
+  PRAGMA EXCEPTION_INIT(fk_violation, -2291);
+BEGIN
+  DELETE FROM departamentos WHERE dept_id = 10;
+EXCEPTION
+  WHEN fk_violation THEN
+    DBMS_OUTPUT.PUT_LINE('No se puede borrar: hay empleados');
+END;
+/
+\end{lstlisting}
+
+\section*{6. Cursores Avanzados}
+
+\textbf{Cursor explícito con parámetros}:
+\begin{lstlisting}
+DECLARE
+  CURSOR c_emp(dept_id NUMBER, min_sal NUMBER) IS
+    SELECT nombre, salario FROM empleados
+    WHERE departamento_id = dept_id AND salario > min_sal;
+  v_nombre empleados.nombre%TYPE;
+  v_salario empleados.salario%TYPE;
+BEGIN
+  OPEN c_emp(10, 3000);
+  LOOP
+    FETCH c_emp INTO v_nombre, v_salario;
+    EXIT WHEN c_emp%NOTFOUND;
+    DBMS_OUTPUT.PUT_LINE(v_nombre || ': ' || v_salario);
+  END LOOP;
+  CLOSE c_emp;
+END;
+/
+\end{lstlisting}
+
+\textbf{FOR...LOOP con cursor} (más simple):
+\begin{lstlisting}
+BEGIN
+  FOR rec IN (SELECT nombre, salario FROM empleados) LOOP
+    DBMS_OUTPUT.PUT_LINE(rec.nombre || ': ' || rec.salario);
+  END LOOP;
+END;
+/
+\end{lstlisting}
+
+\textbf{Cursor con UPDATE/DELETE (FOR UPDATE)}:
+\begin{lstlisting}
+DECLARE
+  CURSOR c_emp IS
+    SELECT emp_id, salario FROM empleados
+    WHERE departamento_id = 10
+    FOR UPDATE OF salario NOWAIT;
+BEGIN
+  FOR rec IN c_emp LOOP
+    UPDATE empleados SET salario = salario * 1.1
+    WHERE CURRENT OF c_emp;
+  END LOOP;
+  COMMIT;
+END;
+/
+\end{lstlisting}
+
+\textbf{Atributos de cursor}:\\
+\texttt{\%FOUND}: TRUE si último FETCH exitoso.\\
+\texttt{\%NOTFOUND}: TRUE si último FETCH sin datos.\\
+\texttt{\%ROWCOUNT}: Número de filas procesadas.\\
+\texttt{\%ISOPEN}: TRUE si cursor abierto.
+
+\textbf{Cursor REF CURSOR (dinámico)}:
+\begin{lstlisting}
+DECLARE
+  TYPE t_cursor IS REF CURSOR;
+  c_gen t_cursor;
+  v_nombre VARCHAR2(100);
+BEGIN
+  OPEN c_gen FOR 'SELECT nombre FROM empleados WHERE dept_id = 10';
+  LOOP
+    FETCH c_gen INTO v_nombre;
+    EXIT WHEN c_gen%NOTFOUND;
+    DBMS_OUTPUT.PUT_LINE(v_nombre);
+  END LOOP;
+  CLOSE c_gen;
+END;
+/
+\end{lstlisting}
+
+\section*{7. Control Avanzado}
+
+\textbf{CASE expresión}:
+\begin{lstlisting}
+v_calif := CASE
+  WHEN v_nota >= 90 THEN 'Sobresaliente'
+  WHEN v_nota >= 70 THEN 'Notable'
+  ELSE 'Aprobado' END;
+\end{lstlisting}
+
+\textbf{Loop con etiquetas}:
+\begin{lstlisting}
+<<ext>> FOR i IN 1..10 LOOP
+  <<int>> FOR j IN 1..10 LOOP
+    EXIT ext WHEN cond;
+  END LOOP int;
+END LOOP ext;
+\end{lstlisting}
+
+\textbf{CONTINUE}:
+\begin{lstlisting}
+FOR i IN 1..100 LOOP
+  CONTINUE WHEN MOD(i,2)=0;
+  procesar(i);
+END LOOP;
+\end{lstlisting}
+
+\section*{8. Colecciones}
+
+\textbf{VARRAY} (array tamaño fijo):
+\begin{lstlisting}
+DECLARE
+  TYPE t_nums IS VARRAY(10) OF NUMBER;
+  v_nums t_nums := t_nums(1,2,3,4,5);
+BEGIN
+  v_nums.EXTEND; v_nums(6) := 100;
+END;
+/
+\end{lstlisting}
+
+\textbf{Nested Table} (tamaño variable):
+\begin{lstlisting}
+DECLARE
+  TYPE t_noms IS TABLE OF VARCHAR2(50);
+  v_noms t_noms := t_noms('Ana','Luis');
+BEGIN
+  v_noms.EXTEND(1); v_noms(3) := 'Pedro';
+END;
+/
+\end{lstlisting}
+
+\textbf{Associative Array} (índice string/number):
+\begin{lstlisting}
+DECLARE
+  TYPE t_sal IS TABLE OF NUMBER INDEX BY VARCHAR2(50);
+  v_sal t_sal;
+BEGIN
+  v_sal('Ana') := 3000; v_sal('Luis') := 4500;
+END;
+/
+\end{lstlisting}
+
+\textbf{Métodos}: COUNT, FIRST, LAST, NEXT(i), PRIOR(i), EXISTS(i), EXTEND(n), DELETE(i), TRIM(n).
+
+\section*{9. SQL Dinámico}
+
+\textbf{EXECUTE IMMEDIATE}:
+\begin{lstlisting}
+DECLARE
+  v_sql VARCHAR2(1000); v_count NUMBER;
+BEGIN
+  v_sql := 'SELECT COUNT(*) FROM empleados';
+  EXECUTE IMMEDIATE v_sql INTO v_count;
+  v_sql := 'UPDATE empleados SET salario=salario*1.1 WHERE dept=:1';
+  EXECUTE IMMEDIATE v_sql USING 10;
+END;
+/
+\end{lstlisting}
+
+\section*{10. Transacciones}
+
+\textbf{AUTONOMOUS\_TRANSACTION}:
+\begin{lstlisting}
+CREATE PROCEDURE log_error(msg VARCHAR2) AS
+  PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+  INSERT INTO error_log VALUES(SYSDATE, msg);
+  COMMIT;
+END;
+/
+\end{lstlisting}
+
+\textbf{SAVEPOINT}:
+\begin{lstlisting}
+BEGIN
+  UPDATE empleados SET salario = salario * 1.1;
+  SAVEPOINT sp1;
+  UPDATE empleados SET bonus = 500;
+  ROLLBACK TO sp1;
+  COMMIT;
+END;
+/
+\end{lstlisting}
+
+\section*{11. Ejemplos Prácticos}
+
+\textbf{Procedimiento con cursor}:
+\begin{lstlisting}
+CREATE PROCEDURE ajustar_salarios(dept_id NUMBER, pct NUMBER) AS
+  CURSOR c_emp IS SELECT emp_id FROM empleados
+    WHERE departamento_id = dept_id FOR UPDATE;
+BEGIN
+  FOR rec IN c_emp LOOP
+    UPDATE empleados SET salario = salario * (1 + pct/100)
+    WHERE CURRENT OF c_emp;
+  END LOOP;
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN ROLLBACK;
+END;
+/
+\end{lstlisting}
+
+\textbf{Trigger de auditoría}:
+\begin{lstlisting}
+CREATE TRIGGER audit_salary
+  AFTER UPDATE OF salario ON empleados FOR EACH ROW
+BEGIN
+  INSERT INTO auditoria VALUES(:OLD.emp_id, :OLD.salario, 
+    :NEW.salario, USER, SYSDATE);
+END;
+/
+\end{lstlisting}
+
+\end{document}
