@@ -1,0 +1,626 @@
+\documentclass[8pt,a4paper,twocolumn]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[margin=0.6cm]{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{textcomp}
+
+% Configuración de colores para código
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{sqlstyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\tiny,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+\lstset{
+    basicstyle=\ttfamily\tiny,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green},
+    stringstyle=\color{red},
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    inputencoding=utf8,
+    literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'\i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+             {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+             {ñ}{{\~n}}1 {Ñ}{{\~N}}1 {ü}{{\"u}}1 {Ü}{{\"U}}1 {ª}{{\textordfeminine}}1 {º}{{\textordmasculine}}1
+}
+
+
+\lstset{style=sqlstyle}
+
+% Reducir tamaño y espaciado de títulos de sección para que encajen mejor
+% en formato de dos columnas y tamaño de fuente pequeño.
+\usepackage{titlesec}
+% Ajustes: cambiar \small/\footnotesize/\scriptsize según prefieras
+	\titleformat{\section}{\normalfont\small\bfseries}{\thesection}{1em}{}
+	\titleformat{\subsection}{\normalfont\scriptsize\bfseries}{\thesubsection}{1em}{}
+% Reducir espacio antes/después de títulos
+	\titlespacing*{\section}{0pt}{0.6ex}{0.4ex}
+	\titlespacing*{\subsection}{0pt}{0.6ex}{0.3ex}
+
+% Reducir tamaño y separación del título principal del documento
+% Usamos el paquete titling para controlar pre/post title
+\usepackage{titling}
+\pretitle{\begin{center}\normalfont\small\bfseries}
+\posttitle{\end{center}\vspace{0ex}}
+% reducir tamaño y separación de date/author si están presentes
+\predate{\begin{center}\small}
+\postdate{\end{center}\vspace{0ex}}
+
+\setlist[itemize]{noitemsep, topsep=0pt, leftmargin=*, itemsep=0pt}
+\setlist[enumerate]{noitemsep, topsep=0pt, leftmargin=*, itemsep=0pt}
+\setlength{\columnsep}{1.0cm}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5pt}
+
+\begin{document}
+
+\tiny
+
+\section{Procedimientos Almacenados}
+
+\textbf{CREATE PROCEDURE}: Define un procedimiento almacenado reutilizable.
+
+\begin{lstlisting}
+CREATE OR REPLACE PROCEDURE nombre_proc(param1 IN tipo, param2 OUT tipo, param3 IN OUT tipo ) AS
+  -- Declaraciones
+  variable tipo;
+  variable_detabla tabla.tipo%TYPE;
+  CURSOR cursor_name IS SELECT ... FROM ... WHERE ...;
+BEGIN
+  -- Código del procedimiento
+  open cursor_name;
+  LOOP
+    FETCH cursor_name INTO variable_detabla;
+    EXIT WHEN cursor_name%NOTFOUND;
+    -- Procesar variable_detabla
+  END LOOP;
+  CLOSE cursor_name;
+  SELECT col INTO variable FROM tabla WHERE id = param1;
+  param2 := variable * 2;
+  DBMS_OUTPUT.PUT_LINE('Procedimiento ejecutado');
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    param2 := 0;
+END;
+/
+call nombre_proc(1, :var_out, :var_inout);
+\end{lstlisting}
+
+\textbf{Eliminar procedimiento}:
+\begin{lstlisting}
+DROP PROCEDURE nombre_proc;
+\end{lstlisting}
+
+\section{Funciones}
+
+\textbf{CREATE FUNCTION}: Define una función que devuelve un valor.
+
+\begin{lstlisting}
+CREATE FUNCTION calc_bonus(salario NUMBER, años NUMBER
+) RETURN NUMBER AS
+  bonus NUMBER;
+BEGIN
+  IF años > 5 THEN
+    bonus := salario * 0.15;
+  ELSE
+    bonus := salario * 0.10;
+  END IF;
+  RETURN bonus;
+EXCEPTION
+  WHEN OTHERS THEN
+    RETURN 0;
+END;
+/
+\end{lstlisting}
+
+\textbf{Uso en consultas}:
+\begin{lstlisting}
+SELECT nombre, salario, 
+       calc_bonus(salario, años_servicio) AS bonus
+FROM empleados;
+\end{lstlisting}
+
+\textbf{Diferencias con procedimientos}:
+\begin{itemize}
+\item Función: RETURN obligatorio, puede usarse en SELECT
+\item Procedimiento: Sin RETURN, solo ejecutable con CALL
+\end{itemize}
+
+\section{Manejo de Excepciones}
+
+\textbf{Estructura EXCEPTION}:
+\begin{lstlisting}
+DECLARE
+  v_salario NUMBER;
+  e_salario_bajo EXCEPTION;
+BEGIN
+  SELECT salario INTO v_salario FROM empleados WHERE id = 999;
+    IF v_salario < 1000 THEN
+        RAISE e_salario_bajo;
+    END IF;
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('Empleado no encontrado');
+  WHEN TOO_MANY_ROWS THEN
+    DBMS_OUTPUT.PUT_LINE('Múltiples empleados');
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+  WHEN e_salario_bajo THEN
+    DBMS_OUTPUT.PUT_LINE('Salario bajo detectado');
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Otro error: ' || SQLERRM);
+END;
+/
+\end{lstlisting}
+
+\textbf{Excepciones predefinidas}:\\
+\texttt{NO\_DATA\_FOUND}: SELECT INTO sin resultados.\\
+\texttt{TOO\_MANY\_ROWS}: SELECT INTO con múltiples filas.\\
+\texttt{ZERO\_DIVIDE}: División por cero.\\
+\texttt{DUP\_VAL\_ON\_INDEX}: Violación de clave única.\\
+\texttt{INVALID\_NUMBER}: Conversión numérica inválida.\\
+\texttt{VALUE\_ERROR}: Error aritmético, conversión o truncamiento.
+\texttt{OTHERS}: Captura cualquier otra excepción.
+
+\textbf{RAISE\_APPLICATION\_ERROR}: Genera error personalizado.
+\begin{lstlisting}
+IF v_edad < 18 THEN
+  RAISE_APPLICATION_ERROR(-20001, 
+    'Edad debe ser >= 18');
+END IF;
+\end{lstlisting}
+Rango: -20000 a -20999 para errores de usuario.
+
+\section{Cursores Avanzados}
+
+\textbf{Cursor explícito con parámetros}:
+\begin{lstlisting}
+DECLARE
+  CURSOR c_emp(dept_id NUMBER, min_sal NUMBER) IS
+    SELECT nombre, salario FROM empleados
+    WHERE departamento_id = dept_id AND salario > min_sal;
+  v_nombre empleados.nombre%TYPE;
+  v_salario empleados.salario%TYPE;
+BEGIN
+  OPEN c_emp(10, 3000);
+  LOOP
+    FETCH c_emp INTO v_nombre, v_salario;
+    EXIT WHEN c_emp%NOTFOUND;
+    DBMS_OUTPUT.PUT_LINE(v_nombre || ': ' || v_salario);
+  END LOOP;
+  CLOSE c_emp;
+END;
+/
+\end{lstlisting}
+
+\textbf{FOR...LOOP con cursor} (más simple):
+\begin{lstlisting}
+BEGIN
+  FOR rec IN (SELECT nombre, salario FROM empleados) LOOP
+    DBMS_OUTPUT.PUT_LINE(rec.nombre || ': ' || rec.salario);
+  END LOOP;
+END;
+/
+\end{lstlisting}
+
+\textbf{Atributos de cursor}:\\
+\texttt{\%FOUND}: TRUE si último FETCH exitoso.\\
+\texttt{\%NOTFOUND}: TRUE si último FETCH sin datos.\\
+\texttt{\%ROWCOUNT}: Número de filas procesadas.\\
+\texttt{\%ISOPEN}: TRUE si cursor abierto.
+
+\section{Control Avanzado}
+
+\textbf{FOR}:
+\begin{lstlisting}
+FOR i IN 1..10 LOOP
+  DBMS_OUTPUT.PUT_LINE('Número: ' || i);
+END LOOP;
+\end{lstlisting}
+
+\textbf{IF/ELSE IF/ELSE}:
+\begin{lstlisting}
+IF condicion1 THEN
+  -- código
+ELSIF condicion2 THEN
+  -- código
+ELSE
+  -- código
+END IF;
+\end{lstlisting}
+
+\textbf{CASE expresión}:
+\begin{lstlisting}
+v_calif := CASE
+  WHEN v_nota >= 90 THEN 'Sobresaliente'
+  WHEN v_nota >= 70 THEN 'Notable'
+  ELSE 'Aprobado' END;
+\end{lstlisting}
+
+\textbf{Loop con etiquetas}:
+\begin{lstlisting}
+<<ext>> FOR i IN 1..10 LOOP
+  <<int>> FOR j IN 1..10 LOOP
+    EXIT ext WHEN cond;
+  END LOOP int;
+END LOOP ext;
+\end{lstlisting}
+
+\textbf{CONTINUE}:
+\begin{lstlisting}
+FOR i IN 1..100 LOOP
+  CONTINUE WHEN MOD(i,2)=0;
+  procesar(i);
+END LOOP;
+\end{lstlisting}
+
+\section{Otras funciones notables de PL/SQL}
+
+Para unir textos y devolverlos por pantalla:
+\begin{lstlisting}
+DBMS_OUTPUT.PUT_LINE('Hola, ' || v_nombre);
+\end{lstlisting}
+
+Para modificar datos en tablas:
+\begin{lstlisting}
+UPDATE tabla SET col1 = 'nuevo_valor' WHERE condicion;
+DELETE FROM tabla WHERE condicion;
+INSERT INTO tabla (col1, col2) VALUES ('val1', 'val2');
+\end{lstlisting}
+
+\section{Ejemplos Prácticos PL/SQL}
+
+\textbf{Procedimiento con cursor}:
+\begin{lstlisting}
+CREATE PROCEDURE ajustar_salarios(dept_id NUMBER, pct NUMBER) AS
+  CURSOR c_emp IS SELECT emp_id FROM empleados
+    WHERE departamento_id = dept_id FOR UPDATE;
+BEGIN
+  FOR rec IN c_emp LOOP
+    UPDATE empleados SET salario = salario * (1 + pct/100)
+    WHERE CURRENT OF c_emp;
+  END LOOP;
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN ROLLBACK;
+END;
+/
+\end{lstlisting}
+
+\section{DDL - Definición de Datos}
+
+\textbf{CREATE TABLE}: Crea una nueva tabla.
+\begin{lstlisting}
+create table tabla(
+  col1 tipo primary key,
+  col2 tipo
+);
+\end{lstlisting}
+
+\textbf{Tipos}: \texttt{string}, \texttt{int/NUMBER}, \texttt{float}, etc.\\
+\textbf{PRIMARY KEY}: Define clave primaria (simple o compuesta).
+
+\section{DML - Manipulación de Datos}
+
+\textbf{INSERT}: Inserta tuplas en una tabla.
+\begin{lstlisting}
+insert into tabla 
+  values('val1','val2',123);
+insert into tabla(col1,col2) 
+  values('val1','val2');
+\end{lstlisting}
+
+\textbf{NULL}: Representa valores desconocidos/no aplicables.
+
+\section{Consultas SELECT}
+
+\textbf{SELECT básico}:
+\begin{lstlisting}
+select columnas from tabla
+  where condicion;
+\end{lstlisting}
+
+\textbf{SELECT *}: Selecciona todas las columnas.\\
+\textbf{DISTINCT}: Elimina duplicados en resultados.
+
+\section{Operadores Lógicos}
+
+\textbf{AND, OR, NOT}: Operadores booleanos.\\
+\textbf{Comparación}: =, \textless\textgreater, \textless, \textgreater, \textless=, \textgreater=\\
+\textbf{IS NULL / IS NOT NULL}: Comprueba valores nulos.\\
+\textbf{IN / NOT IN}: Pertenencia a conjunto.
+
+\section{VISTAS (CREATE VIEW)}
+
+Las vistas son consultas almacenadas que pueden referenciarse como tablas.
+
+\begin{lstlisting}
+create view nombre_vista as
+  select ... from ... where ...;
+\end{lstlisting}
+
+\section{Operaciones de Conjuntos}
+
+\textbf{UNION}: Unión de resultados (elimina duplicados).
+\textbf{UNION DISTINCT}: Unión eliminando duplicados explícitamente.
+\textbf{INTERSECT}: Intersección de resultados.
+\textbf{EXCEPT}: Diferencia de conjuntos (A - B).
+\textbf{EXCEPT ALL}: Diferencia manteniendo duplicados.
+
+\begin{lstlisting}
+select dni from programadores
+union / union distinct / intersect / except / except all
+select dni from analistas;
+\end{lstlisting}
+
+\section{JOIN - Combinación de Tablas}
+
+\textbf{JOIN implícito} (producto cartesiano con WHERE):
+\begin{lstlisting}
+select * from tabla1, tabla2
+  where tabla1.id = tabla2.id;
+\end{lstlisting}
+
+\textbf{NATURAL JOIN}: Join por columnas con mismo nombre.
+\begin{lstlisting}
+select * from tabla1 
+  natural join tabla2;
+\end{lstlisting}
+
+\textbf{JOIN explícito}:
+\begin{lstlisting}
+select * from tabla1 
+  join tabla2 on tabla1.col1 = tabla2.col2;
+\end{lstlisting}
+Se puede usar \textbf{INNER JOIN}, \textbf{LEFT JOIN}, \textbf{RIGHT JOIN}, \textbf{FULL JOIN}.
+
+\section{Funciones de Agregación}
+
+\textbf{SUM(col)}: Suma de valores.\\
+\textbf{COUNT(*)}: Cuenta tuplas.\\
+\textbf{AVG(col)}: Media aritmética.\\
+\textbf{MAX(col)}: Valor máximo.\\
+\textbf{MIN(col)}: Valor mínimo.
+
+\begin{lstlisting}
+select dni, sum(horas) as total
+from distribucion
+group by dni;
+\end{lstlisting}
+
+\section{GROUP BY y HAVING}
+
+\textbf{GROUP BY}: Agrupa filas por columna(s).
+\textbf{HAVING}: Filtra grupos (después de GROUP BY).
+\begin{lstlisting}
+select col, count(*) from tabla
+  group by col
+  having count(*) > 5;
+\end{lstlisting}
+
+\textit{Diferencia}: WHERE filtra antes de agrupar, HAVING después.
+
+\section{Like}
+\textbf{LIKE}: Busca patrones en cadenas.
+\begin{lstlisting}
+where nombre like 'A%'; -- Nombres que empiezan por A
+where nombre like '%son'; -- Nombres que terminan en son
+where nombre like '%an%'; -- Nombres que contienen 'an'
+where nombre like '_a__'; -- Nombres de 4 letras con 'a' en 2ª posición
+\end{lstlisting}
+
+\section{Subconsultas}
+
+\textbf{Subconsulta escalar}: Devuelve un único valor.
+\begin{lstlisting}
+select * from tabla where col =
+  (select max(col) from tabla);
+\end{lstlisting}
+
+\textbf{Subconsulta en IN}:
+\begin{lstlisting}
+where dni in 
+  (select dni from analistas);
+\end{lstlisting}
+
+\textbf{Subconsulta en FROM}: Tabla derivada.
+\begin{lstlisting}
+select * from 
+  (select dni from prog 
+   union select dni from anal);
+\end{lstlisting}
+
+\section{DIVISION}
+
+Operador específico de DES para encontrar elementos que se relacionan con todos los de otro conjunto.
+
+\begin{lstlisting}
+select dniEmp from
+(select codigoPr,dniEmp 
+ from distribucion)
+division
+(select codigoPr from dist
+ where dniEmp='5');
+\end{lstlisting}
+
+\textbf{Interpretación}: Empleados asignados a todos los proyectos del empleado '5'.
+
+\section{Operaciones Aritméticas}
+
+Se pueden realizar operaciones en SELECT:
+\begin{lstlisting}
+select codigo, horas*1.2 
+  from distribucion;
+\end{lstlisting}
+
+\textbf{Operadores}: +, -, *, /
+
+\section{Alias y RENAME}
+
+\textbf{AS}: Define alias para columnas/tablas.
+\begin{lstlisting}
+select dni as identificador,
+  sum(horas) as total
+from distribucion;
+\end{lstlisting}
+
+\textbf{RENAME} (sintaxis DES):
+\begin{lstlisting}
+rename (dniEmp as dni)
+  (distribucion);
+\end{lstlisting}
+
+\section{WITH - Expresiones de Tabla Comunes (CTE)}
+
+\textbf{WITH ... AS} permite definir tablas temporales nombradas (CTE) que simplifican consultas complejas y mejoran legibilidad. Se pueden encadenar varias CTE y usar \texttt{WITH RECURSIVE} para recursión.
+
+\textbf{Sintaxis básica}:
+\begin{lstlisting}
+WITH nombre_cte (columna1, ...) AS (
+  select ...
+)
+SELECT ... FROM nombre_cte;
+\end{lstlisting}
+
+\textbf{Ejemplo 1: sumar horas por empleado y filtrar}
+\begin{lstlisting}
+WITH total_horas (dniEmp, total) AS (
+  SELECT dniEmp, SUM(horas) AS total
+  FROM distribución
+  GROUP BY dniEmp
+)
+SELECT dniEmp, total
+FROM total_horas
+WHERE total > 20;
+\end{lstlisting}
+
+\textbf{Ejemplo 2: equivalente a DIVISION (empleados que hacen todos los proyectos de 'Evaristo')}
+\begin{lstlisting}
+WITH proyectos_eva (códigoPr) AS (
+  SELECT códigoPr
+  FROM distribución
+  WHERE dniEmp = (SELECT dni FROM analistas WHERE nombre = 'Evaristo')
+),
+empleados_conjunto (dniEmp) AS (
+  SELECT dniEmp
+  FROM distribución
+  WHERE códigoPr IN (SELECT códigoPr FROM proyectos_eva)
+  GROUP BY dniEmp
+  HAVING COUNT(DISTINCT códigoPr) = (SELECT COUNT(*) FROM proyectos_eva)
+)
+SELECT dniEmp FROM empleados_conjunto;
+\end{lstlisting}
+
+\section{Uso del TOP y ORDER BY}
+\textbf{TOP n}: Limita el número de filas devueltas.
+\textbf{ORDER BY}: Ordena resultados por columna(s), se puede usar ASC (ascendente) o DESC (descendente).
+\begin{lstlisting}
+SELECT TOP 5 dniEmp, SUM(horas) AS total
+FROM distribución
+GROUP BY dniEmp
+ORDER BY total DESC;
+\end{lstlisting}
+
+\section{Ejemplos Prácticos}
+
+\textbf{Empleados sin teléfono}:
+\begin{lstlisting}
+select dni,nombre from prog
+where telefono is null
+union
+select dni,nombre from anal
+where telefono is null;
+\end{lstlisting}
+
+\textbf{Suma de horas por empleado}:
+\begin{lstlisting}
+select dni, sum(horas) as total
+from (select dni from prog 
+      union select dni from anal)
+join dist on dni = dniEmp
+group by dni;
+\end{lstlisting}
+
+\textbf{Proyectos sin analistas}:
+\begin{lstlisting}
+select codigo from proyectos
+except
+select distinct codigo from
+(select codigoPr as codigo,
+        dniEmp from dist)
+join analistas on dniEmp = dni;
+\end{lstlisting}
+
+\textbf{Combinando múltiples operaciones}:
+\begin{lstlisting}
+create view vista_compleja as
+(select dni,nombre,codigoPr 
+ from (select * from prog 
+       union select * from anal)
+ join dist on dni = dniEmp)
+union
+(select dni,nombre,codigo 
+ from (select * from prog 
+       union select * from anal)
+ join proy on dni = dniDir);
+\end{lstlisting}
+
+\textbf{Combinando JOIN y WITH}:
+\begin{lstlisting}
+WITH pelea (barco, fecha, resultado) AS (
+  SELECT barco, fecha, resultado
+  FROM batallas join resultados
+    ON nombre = batalla
+)
+SELECT barco
+FROM pelea p1 JOIN pelea p2
+  ON p1.barco = p2.barco
+WHERE p1.fecha < p2.fecha
+  AND p1.resultado = 'victoria'
+  AND p2.resultado = 'derrota';
+\end{lstlisting}
+
+\textbf{Uso de 2 JOIN simultaneos}
+\begin{lstlisting}
+SELECT  PROJNO, DEPTNAME, MGRNO, LASTNAME
+FROM    PROJECT JOIN DEPARTMENT
+        ON PROJECT.DEPTNO = DEPARTMENT.DEPTNO
+  JOIN EMPLOYEE
+        ON DEPARTMENT.MGRNO = EMPLOYEE.EMPNO
+WHERE   DEPARTMENT.DEPTNO = 'D21'
+ORDER BY PROJNO;
+\end{lstlisting}
+Que equivale a:
+\begin{lstlisting}
+SELECT  PROJNO, DEPTNAME, MGRNO, LASTNAME
+FROM    PROJECT P JOIN DEPARTMENT D
+        ON P.DEPTNO = D.DEPTNO
+  JOIN EMPLOYEE E
+        ON D.MGRNO = E.EMPNO
+WHERE   D.DEPTNO = 'D21'
+ORDER BY P.PROJNO;
+\end{lstlisting}
+En este ultimo caso, se puede poner en el SELECT PROJNO o P.PROJNO, ya que no hay ambigüedad.
+
+\end{document}
