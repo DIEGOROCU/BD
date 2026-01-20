@@ -1,3 +1,6 @@
+-- ACERTIJO 1: Buscar el patrón con la reserva más antigua
+-- Objetivo: Encontrar qué patrón hizo su primera reserva más tempranamente
+
 /abolish
 /type_casting on
 /multiline on
@@ -29,18 +32,19 @@ insert into reservas(id_patron, id_barco, fecha) values('3','5','2014-07-13');
 insert into reservas(id_patron, id_barco, fecha) values('4','4','2014-08-22');
 insert into reservas(id_patron, id_barco, fecha) values('4','5','2014-09-03');
 
--- Obtenemos una tabla de las parejas de reservas
+-- Vista1: Productos cartesiano de fechas consigo misma para comparar
 aux1 := project fecha(reservas) product (rename aux (fecha_aux) (project fecha(reservas)));
 -- Seleccionamos aquellas fechas que son mayores que la otra asociada a ellas
 aux2 := select (fecha > fecha_aux) (aux1);
--- La reserva minima es aquella que no era mayor que ninguna, por lo que podemos restar todas las reservas que son mayores que alguna
+-- La reserva mínima es aquella que no era mayor que ninguna
 aux3 := (project fecha(reservas)) difference (project fecha(aux2));
--- Emparejamos la reserva mas antigua con el resto
+-- Emparejamos la reserva más antigua con el resto
 aux4 := reservas product (rename aux (fecha_aux) (aux3));
--- Guardamos los id de los patrones que tengan la reserva mas antigua
+-- Guardamos los ids de los patrones que tengan la reserva más antigua
 aux5 := project id_patron (select (fecha = fecha_aux) (aux4));
--- Escogemos los patrones que tienen las ids anteriores
+-- Obtenemos los patrones con esos ids
 aux6 := select (id_patron = id_aux) (patrones product (rename aux (id_aux) (aux5)));
--- Escogemos el nombre de dichos patrones
+-- Vista final: nombres de los patrones con reserva más antigua
 vista1 := project nombre (aux6);
 select true (vista1);
+
